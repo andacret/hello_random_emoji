@@ -1,12 +1,5 @@
-// This file is part of Hello Random Emoji
-// https://github.com/eduhoratiu/hello_random_emoji
-//
-// Copyright 2025 eduhoratiu. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for details.
-
-import 'dart:math';
-
 import 'package:flutter/material.dart';
+import 'dart:math';
 
 import '../data/emojis.dart';
 import '../models/emoji.dart';
@@ -18,26 +11,35 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  /// The random number generator used to select a random emoji.
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   final Random _random = Random();
-
-  /// The emoji that is currently displayed.
   late Emoji _currentEmoji;
+  late AnimationController _controller;
+  late Animation<double> _animation;
 
   @override
   void initState() {
     super.initState();
-
-    // Randomize the emoji when the screen is first displayed.
-    _randomizeEmoji();
+    _currentEmoji = emojiList[_random.nextInt(emojiList.length)];
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
   }
 
-  /// Randomizes the emoji that is currently displayed.
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   void _randomizeEmoji() {
-    final int index = _random.nextInt(emojiList.length);
-    setState(() {
-      _currentEmoji = emojiList[index];
+    _controller.forward(from: 0.0).then((_) {
+      setState(() {
+        _currentEmoji = emojiList[_random.nextInt(emojiList.length)];
+      });
     });
   }
 
@@ -53,14 +55,17 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                _currentEmoji.emoji,
-                style: TextStyle(fontSize: 128),
+              ScaleTransition(
+                scale: _animation,
+                child: Text(
+                  _currentEmoji.emoji,
+                  style: const TextStyle(fontSize: 128),
+                ),
               ),
               Text(
                 _currentEmoji.name,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 24),
+                style: const TextStyle(fontSize: 24),
               ),
             ],
           ),
@@ -69,6 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: FloatingActionButton.large(
         onPressed: _randomizeEmoji,
         tooltip: 'Randomize Emoji',
+        backgroundColor: const Color.fromARGB(255, 107, 233, 107),
         child: const Icon(Icons.shuffle),
       ),
     );
